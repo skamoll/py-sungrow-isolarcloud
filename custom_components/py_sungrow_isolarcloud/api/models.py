@@ -69,6 +69,26 @@ class ValueUnit:
             return cls(value=val, unit=unit)
         return cls(value=parse_float(raw), unit=normalize_unit(default_unit))
 
+    def in_kw(self) -> ValueUnit:
+        """Convert W/kW/MW value to canonical kW."""
+        if self.value is None:
+            return ValueUnit(None, "kW")
+        if self.unit == "W":
+            return ValueUnit(round(self.value / 1000.0, 4), "kW")
+        if self.unit == "MW":
+            return ValueUnit(round(self.value * 1000.0, 4), "kW")
+        return ValueUnit(self.value, "kW")
+
+    def in_kwh(self) -> ValueUnit:
+        """Convert Wh/kWh/MWh value to canonical kWh."""
+        if self.value is None:
+            return ValueUnit(None, "kWh")
+        if self.unit == "Wh":
+            return ValueUnit(round(self.value / 1000.0, 4), "kWh")
+        if self.unit == "MWh":
+            return ValueUnit(round(self.value * 1000.0, 4), "kWh")
+        return ValueUnit(self.value, "kWh")
+
 
 @dataclass(slots=True)
 class PlantSummary:
@@ -130,19 +150,30 @@ class PlantFlow:
 
     @classmethod
     def from_detail_dict(cls, data: dict[str, Any]) -> PlantFlow:
-        """Parse PsDetailBeanOversea fields into PlantFlow."""
+        """Parse PsDetailBeanOversea fields into PlantFlow with canonical kW/kWh units."""
         pv = ValueUnit.from_raw(
             data.get("pv_power_map") or data.get("curr_power"),
             "kW",
-        )
-        load = ValueUnit.from_raw(data.get("load_power_map"), "kW")
-        grid = ValueUnit.from_raw(data.get("power_grid_power_map"), "kW")
+        ).in_kw()
+        load = ValueUnit.from_raw(data.get("load_power_map"), "kW").in_kw()
+        grid = ValueUnit.from_raw(data.get("power_grid_power_map"), "kW").in_kw()
         battery = ValueUnit.from_raw(
             data.get("charging_discharging_power_map") or data.get("es_active_power_map"),
             "kW",
-        )
+        ).in_kw()
         soc = parse_float(data.get("battery_level_percent"))
         cap = ValueUnit.from_raw(data.get("design_capacity"), "kWp")
+
+        daily_pv = ValueUnit.from_raw(
+            data.get("today_energy_virgin")
+            or data.get("today_energy")
+            or data.get("pv_energy_map"),
+            "kWh",
+        ).in_kwh()
+        total_pv = ValueUnit.from_raw(
+            data.get("total_energy_virgin") or data.get("total_energy"),
+            "kWh",
+        ).in_kwh()
 
         return cls(
             pv_power=pv,
@@ -150,54 +181,50 @@ class PlantFlow:
             grid_power=grid,
             battery_power=battery,
             battery_soc=soc,
-            daily_pv_energy=ValueUnit.from_raw(
-                data.get("today_energy") or data.get("p83022_map"),
-                "kWh",
-            ),
-            total_pv_energy=ValueUnit.from_raw(
-                data.get("total_energy") or data.get("p83024_map"),
-                "kWh",
-            ),
+            daily_pv_energy=daily_pv,
+            total_pv_energy=total_pv,
             daily_battery_charge=ValueUnit.from_raw(
-                data.get("dc_charge_today_energy") or data.get("today_es_charge_energy"),
+                data.get("battery_charge_energy_map")
+                or data.get("dc_charge_today_energy")
+                or data.get("today_es_charge_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             total_battery_charge=ValueUnit.from_raw(
                 data.get("dc_charge_total_energy") or data.get("total_es_charge_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             daily_battery_discharge=ValueUnit.from_raw(
-                data.get("today_es_discharge_energy"),
+                data.get("battery_discharge_energy_map") or data.get("today_es_discharge_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             total_battery_discharge=ValueUnit.from_raw(
                 data.get("total_es_discharge_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             daily_grid_import=ValueUnit.from_raw(
-                data.get("today_buy_energy"),
+                data.get("purchased_energy_map") or data.get("today_buy_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             total_grid_import=ValueUnit.from_raw(
                 data.get("total_buy_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             daily_grid_export=ValueUnit.from_raw(
-                data.get("today_sell_energy"),
+                data.get("feed_in_energy_map") or data.get("today_sell_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             total_grid_export=ValueUnit.from_raw(
                 data.get("total_sell_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             daily_load_energy=ValueUnit.from_raw(
-                data.get("today_use_energy"),
+                data.get("load_energy_map") or data.get("today_use_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             total_load_energy=ValueUnit.from_raw(
                 data.get("total_use_energy"),
                 "kWh",
-            ),
+            ).in_kwh(),
             design_capacity_kwp=cap.value,
             last_update_time=data.get("data_last_update_time") or data.get("update_time"),
         )
@@ -226,7 +253,11 @@ class DeviceSummary:
     def from_dict(cls, ps_id: str, data: dict[str, Any]) -> DeviceSummary:
         """Build DeviceSummary from a getPsAllDeviceList row."""
         dev_type_raw = parse_float(data.get("device_type"))
-        status_raw = parse_float(data.get("dev_status") or data.get("dev_run_status"))
+        status_raw = parse_float(
+            data.get("device_status")
+            if data.get("device_status") is not None
+            else (data.get("dev_status") or data.get("dev_run_status"))
+        )
         ps_key = str(data.get("ps_key") or data.get("uuid") or "")
         return cls(
             ps_id=str(data.get("ps_id") or ps_id),

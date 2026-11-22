@@ -44,6 +44,10 @@ def test_value_unit_from_raw() -> None:
     assert vu_scalar.value == 42.5
     assert vu_scalar.unit == "°C"
 
+    assert ValueUnit(715.0, "W").in_kw() == ValueUnit(0.715, "kW")
+    assert ValueUnit(4880500.0, "Wh").in_kwh() == ValueUnit(4880.5, "kWh")
+    assert ValueUnit(4.9, "MWh").in_kwh() == ValueUnit(4900.0, "kWh")
+
 
 def test_plant_summary_and_flow() -> None:
     """PlantSummary and PlantFlow parse curated endpoint payloads."""
