@@ -5,6 +5,7 @@ from .client import (
     ISolarCloudAuthError,
     ISolarCloudClient,
     ISolarCloudConnectionError,
+    ISolarCloudError,
 )
 from .const import GATEWAY_AUTO, GATEWAYS
 from .models import AuthSession, DeviceSummary, PlantData, PlantFlow, PlantSummary, ValueUnit
@@ -18,6 +19,7 @@ __all__ = [
     "ISolarCloudAuthError",
     "ISolarCloudClient",
     "ISolarCloudConnectionError",
+    "ISolarCloudError",
     "PlantData",
     "PlantFlow",
     "PlantSummary",
