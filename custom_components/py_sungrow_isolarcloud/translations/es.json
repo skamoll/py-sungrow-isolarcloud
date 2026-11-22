@@ -1,0 +1,75 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Conectar con Sungrow iSolarCloud",
+        "description": "Introduce tus credenciales de iSolarCloud y el servidor regional.",
+        "data": {
+          "gateway": "Servidor regional",
+          "username": "Correo / Usuario",
+          "password": "Contraseña",
+          "scan_interval": "Intervalo de actualización (segundos)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se pudo conectar con iSolarCloud",
+      "invalid_auth": "Credenciales no válidas",
+      "unknown": "Error inesperado"
+    },
+    "abort": {
+      "already_configured": "Esta cuenta ya está configurada"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Sungrow iSolarCloud",
+        "data": {
+          "scan_interval": "Intervalo de actualización (segundos)"
+        }
+      }
+    }
+  },
+  "selector": {
+    "gateway": {
+      "options": {
+        "auto": "Auto (detectar servidor regional)",
+        "eu": "Europa (gateway.isolarcloud.eu)",
+        "com": "Internacional (gateway.isolarcloud.com)",
+        "au": "Australia (augateway.isolarcloud.com)",
+        "hk": "Hong Kong (gateway.isolarcloud.com.hk)",
+        "cn": "China (gateway.isolarcloud.com.cn)",
+        "in": "India (gateway.isolarcloud.in)"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "pv_power": { "name": "Potencia fotovoltaica" },
+      "load_power": { "name": "Consumo de la casa" },
+      "grid_power": { "name": "Potencia de red" },
+      "battery_power": { "name": "Potencia de batería" },
+      "battery_soc": { "name": "Carga de batería" },
+      "daily_pv_energy": { "name": "Producción fotovoltaica hoy" },
+      "total_pv_energy": { "name": "Producción fotovoltaica total" },
+      "daily_battery_charge": { "name": "Carga de batería hoy" },
+      "total_battery_charge": { "name": "Carga de batería total" },
+      "daily_battery_discharge": { "name": "Descarga de batería hoy" },
+      "total_battery_discharge": { "name": "Descarga de batería total" },
+      "daily_grid_import": { "name": "Importación de red hoy" },
+      "total_grid_import": { "name": "Importación de red total" },
+      "daily_grid_export": { "name": "Exportación a red hoy" },
+      "total_grid_export": { "name": "Exportación a red total" },
+      "daily_load_energy": { "name": "Consumo hoy" },
+      "total_load_energy": { "name": "Consumo total" },
+      "installed_capacity": { "name": "Capacidad instalada" },
+      "last_update": { "name": "Última actualización" },
+      "device_status_code": { "name": "Código de estado" }
+    },
+    "binary_sensor": {
+      "plant_online": { "name": "En línea" },
+      "device_online": { "name": "En línea" }
+    }
+  }
+}

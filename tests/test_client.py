@@ -1,0 +1,126 @@
+"""Tests for async ISolarCloudClient with mocked HTTP responses."""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import pytest
+
+from custom_components.py_sungrow_isolarcloud.api import (
+    ISolarCloudAuthError,
+    ISolarCloudClient,
+)
+
+
+class _FakeResponse:
+    def __init__(self, status: int, body: dict[str, Any], headers: dict[str, str] | None = None):
+        self.status = status
+        self._body = json.dumps(body)
+        self.headers = headers or {}
+
+    async def text(self) -> str:
+        return self._body
+
+    async def __aenter__(self) -> _FakeResponse:
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        return None
+
+
+class _FakeSession:
+    def __init__(self, responses: list[_FakeResponse]) -> None:
+        self._responses = list(responses)
+        self.calls: list[tuple[str, dict[str, str]]] = []
+
+    def post(self, url: str, data: str, headers: dict[str, str], timeout: Any) -> _FakeResponse:
+        self.calls.append((url, headers))
+        return self._responses.pop(0)
+
+
+@pytest.mark.asyncio
+async def test_login_and_fetch_all_plants() -> None:
+    """Client logs in, fetches plants, plant flow, and device list."""
+    session = _FakeSession(
+        [
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "1",
+                    "result_msg": "success",
+                    "result_data": {"token": "abc_123", "user_id": "999"},
+                },
+            ),
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "1",
+                    "result_msg": "success",
+                    "result_data": {
+                        "pageList": [
+                            {"ps_id": "6116893", "ps_name": "Casa", "ps_status": 1},
+                        ]
+                    },
+                },
+            ),
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "1",
+                    "result_msg": "success",
+                    "result_data": {
+                        "pv_power_map": {"value": "3.2", "unit": "kW"},
+                        "battery_level_percent": "75",
+                    },
+                },
+            ),
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "1",
+                    "result_msg": "success",
+                    "result_data": {
+                        "pageList": [
+                            {
+                                "ps_key": "6116893_14_1_1",
+                                "device_name": "Inverter",
+                                "dev_status": 1,
+                            }
+                        ]
+                    },
+                },
+            ),
+        ]
+    )
+
+    client = ISolarCloudClient(session, "user@example.com", "secret", gateway="eu")  # type: ignore[arg-type]
+    data = await client.async_fetch_all_plants()
+
+    assert "6116893" in data
+    plant = data["6116893"]
+    assert plant.summary.ps_name == "Casa"
+    assert plant.flow.pv_power.value == 3.2
+    assert plant.flow.battery_soc == 75.0
+    assert len(plant.devices) == 1
+    assert plant.devices[0].ps_key == "6116893_14_1_1"
+    assert session.calls[0][0] == "https://gateway.isolarcloud.eu/v1/userService/login"
+
+
+@pytest.mark.asyncio
+async def test_login_invalid_credentials_raises_auth_error() -> None:
+    """Invalid credentials raise ISolarCloudAuthError without looping."""
+    session = _FakeSession(
+        [
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "010",
+                    "result_msg": "Incorrect account or password",
+                },
+            )
+        ]
+    )
+    client = ISolarCloudClient(session, "user@example.com", "wrong", gateway="eu")  # type: ignore[arg-type]
+    with pytest.raises(ISolarCloudAuthError):
+        await client.async_login()

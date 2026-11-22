@@ -1,0 +1,39 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in py-sungrow-isolarcloud
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the bug.
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant Version
+      placeholder: "e.g. 2026.11.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: gateway
+    attributes:
+      label: Regional Gateway
+      options:
+        - auto
+        - eu
+        - com
+        - au
+        - hk
+        - cn
+        - in
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Please redact any email addresses, passwords, tokens, or serial numbers.
+      render: text
