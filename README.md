@@ -56,3 +56,13 @@ pip install -e ".[dev]"
 ruff check . && ruff format --check .
 pytest -v
 ```
+
+## Contributing, Issues & Security
+
+- **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md).
+- **Reporting Bugs & Feature Requests:** Open an issue using the [GitHub Issue Templates](https://github.com/skamoll/py-sungrow-isolarcloud/issues/new/choose). Never include credentials, tokens, or personal plant IDs.
+- **Security Vulnerabilities:** Please report privately via [SECURITY.md](SECURITY.md) instead of opening a public issue.
+
+## License
+
+Licensed under the [MIT License](LICENSE).

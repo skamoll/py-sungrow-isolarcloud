@@ -6,7 +6,7 @@
 
 - [ ] Bug fix
 - [ ] New feature
-- [ ] Translation / documentation update
+- [ ] Documentation update
 - [ ] Refactor / CI
 
 ## Checklist
@@ -14,5 +14,5 @@
 - [ ] `ruff check .` passes
 - [ ] `ruff format --check .` passes
 - [ ] `pytest -v` passes
-- [ ] `strings.json` and `translations/*.json` updated (if applicable)
+- [ ] Public API changes are typed and documented in `README.md`
 - [ ] No credentials, tokens, or personal plant data included

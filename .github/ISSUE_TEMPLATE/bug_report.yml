@@ -11,10 +11,10 @@ body:
     validations:
       required: true
   - type: input
-    id: ha_version
+    id: python_version
     attributes:
-      label: Home Assistant Version
-      placeholder: "e.g. 2026.11.0"
+      label: Python & Package Version
+      placeholder: "e.g. Python 3.13.1, py-sungrow-isolarcloud 0.1.0"
     validations:
       required: true
   - type: dropdown
@@ -34,6 +34,6 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Relevant Logs
-      description: Please redact any email addresses, passwords, tokens, or serial numbers.
+      label: Minimal Reproduction & Logs
+      description: Please redact any email addresses, passwords, tokens, plant IDs, or serial numbers.
       render: text

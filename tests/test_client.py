@@ -59,7 +59,7 @@ async def test_login_and_fetch_all_plants() -> None:
                     "result_msg": "success",
                     "result_data": {
                         "pageList": [
-                            {"ps_id": "6116893", "ps_name": "Casa", "ps_status": 1},
+                            {"ps_id": "1234567", "ps_name": "Casa", "ps_status": 1},
                         ]
                     },
                 },
@@ -83,7 +83,7 @@ async def test_login_and_fetch_all_plants() -> None:
                     "result_data": {
                         "pageList": [
                             {
-                                "ps_key": "6116893_14_1_1",
+                                "ps_key": "1234567_14_1_1",
                                 "device_name": "Inverter",
                                 "device_type": 14,
                                 "device_status": 1,
@@ -146,13 +146,13 @@ async def test_login_and_fetch_all_plants() -> None:
     client = ISolarCloudClient(session, "user@example.com", "secret", gateway="eu")  # type: ignore[arg-type]
     data = await client.async_fetch_all_plants()
 
-    assert "6116893" in data
-    plant = data["6116893"]
+    assert "1234567" in data
+    plant = data["1234567"]
     assert plant.summary.ps_name == "Casa"
     assert plant.flow.pv_power.value == 3.2
     assert plant.flow.battery_soc == 75.0
     assert len(plant.devices) == 1
-    assert plant.devices[0].ps_key == "6116893_14_1_1"
+    assert plant.devices[0].ps_key == "1234567_14_1_1"
     assert plant.devices[0].points[13003].value == 1200.0
     assert plant.devices[0].points[13146].value == "Grid-connected operation"
     assert session.calls[0][0] == "https://gateway.isolarcloud.eu/v1/userService/login"

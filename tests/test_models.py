@@ -54,13 +54,13 @@ def test_plant_summary_and_flow() -> None:
     """PlantSummary and PlantFlow parse curated endpoint payloads."""
     summary = PlantSummary.from_dict(
         {
-            "ps_id": 6116893,
+            "ps_id": 1234567,
             "ps_name": "Casa",
             "ps_status": "1",
             "design_capacity": {"value": "6.0", "unit": "kWp"},
         }
     )
-    assert summary.ps_id == "6116893"
+    assert summary.ps_id == "1234567"
     assert summary.ps_name == "Casa"
     assert summary.is_online is True
     assert summary.design_capacity_kwp == 6.0
@@ -88,9 +88,9 @@ def test_plant_summary_and_flow() -> None:
 def test_device_summary() -> None:
     """DeviceSummary preserves stable ps_key and metadata."""
     dev = DeviceSummary.from_dict(
-        "6116893",
+        "1234567",
         {
-            "ps_key": "6116893_14_1_1",
+            "ps_key": "1234567_14_1_1",
             "uuid": "8633308",
             "device_name": "SH6.0RS",
             "device_model": "SH6.0RS",
@@ -99,7 +99,7 @@ def test_device_summary() -> None:
             "dev_status": 1,
         },
     )
-    assert dev.ps_key == "6116893_14_1_1"
+    assert dev.ps_key == "1234567_14_1_1"
     assert dev.is_online is True
     assert dev.device_model == "SH6.0RS"
     assert dev.has_fault is False

@@ -19,7 +19,7 @@ def test_aes_roundtrip() -> None:
     assert len(key) == 32
     assert key.startswith("web")
 
-    plaintext = '{"ps_id":"6116893","lang":"_en_US"}'
+    plaintext = '{"ps_id":"1234567","lang":"_en_US"}'
     encrypted = aes_encrypt_hex(plaintext, key)
     assert encrypted != plaintext
     assert aes_decrypt_hex(encrypted, key) == plaintext
