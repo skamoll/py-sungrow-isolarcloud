@@ -106,6 +106,15 @@ class PlantSummary:
         """Return True when plant status indicates normal/online operation."""
         return self.ps_status == 1
 
+    @property
+    def status_text(self) -> str | None:
+        """Return human-readable plant status."""
+        if self.ps_status is None:
+            return None
+        return {0: "Offline", 1: "Normal", 2: "Fault"}.get(
+            self.ps_status, f"Status {self.ps_status}"
+        )
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PlantSummary:
         """Build PlantSummary from a getPsList item."""
@@ -145,6 +154,10 @@ class PlantFlow:
     total_grid_export: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
     daily_load_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
     total_load_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
+    month_pv_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
+    today_income: ValueUnit = field(default_factory=lambda: ValueUnit(None, "EUR"))
+    total_income: ValueUnit = field(default_factory=lambda: ValueUnit(None, "EUR"))
+    co2_reduced_total: ValueUnit = field(default_factory=lambda: ValueUnit(None, "t"))
     design_capacity_kwp: float | None = None
     last_update_time: str | None = None
     ps_fault_status: str | None = None
@@ -233,6 +246,13 @@ class PlantFlow:
                 or data.get("p83124_map"),
                 "kWh",
             ).in_kwh(),
+            month_pv_energy=ValueUnit.from_raw(
+                data.get("month_energy_virgin") or data.get("month_energy"),
+                "kWh",
+            ).in_kwh(),
+            today_income=ValueUnit.from_raw(data.get("today_income"), "EUR"),
+            total_income=ValueUnit.from_raw(data.get("total_income"), "EUR"),
+            co2_reduced_total=ValueUnit.from_raw(data.get("co2_reduce_total"), "t"),
             design_capacity_kwp=cap.value,
             last_update_time=data.get("data_last_update_time") or data.get("update_time"),
             ps_fault_status=(

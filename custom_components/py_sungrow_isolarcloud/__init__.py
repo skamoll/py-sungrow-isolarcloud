@@ -13,7 +13,7 @@ from .const import CONF_GATEWAY, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMA
 from .coordinator import ISolarCloudCoordinator
 from .entity import format_plant_device_name
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

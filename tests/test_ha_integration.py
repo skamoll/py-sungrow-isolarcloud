@@ -126,8 +126,15 @@ async def test_ha_setup_devices_entities_and_unload(tmp_path: Path) -> None:
 
         ent_reg = er.async_get(hass)
         entities = er.async_entries_for_config_entry(ent_reg, entry.entry_id)
-        assert len(entities) == 20
+        assert len(entities) == 22
         assert not any(e.entity_id.endswith("_2") for e in entities)
+
+        status_state = hass.states.get("sensor.pv_casa_plant_status")
+        assert status_state is not None
+        assert status_state.state == "Normal"
+
+        refresh_btn = hass.states.get("button.pv_casa_refresh_data")
+        assert refresh_btn is not None
 
         last_update_state = hass.states.get("sensor.pv_casa_last_update")
         assert last_update_state is not None

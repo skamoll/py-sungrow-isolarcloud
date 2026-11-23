@@ -220,8 +220,54 @@ PLANT_SENSORS: tuple[PlantSensorDescription, ...] = (
         translation_key="installed_capacity",
         entity_category=EntityCategory.DIAGNOSTIC,
         native_unit_of_measurement="kWp",
+        suggested_display_precision=2,
         icon="mdi:solar-panel",
         value_fn=lambda p: p.flow.design_capacity_kwp or p.summary.design_capacity_kwp,
+    ),
+    PlantSensorDescription(
+        key="month_pv_energy",
+        translation_key="month_pv_energy",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=2,
+        value_fn=lambda p: _vu_value(p.flow.month_pv_energy),
+        unit_fn=lambda p: _vu_unit(p.flow.month_pv_energy, UnitOfEnergy.KILO_WATT_HOUR),
+    ),
+    PlantSensorDescription(
+        key="today_income",
+        translation_key="today_income",
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.TOTAL,
+        suggested_display_precision=2,
+        value_fn=lambda p: _vu_value(p.flow.today_income),
+        unit_fn=lambda p: _vu_unit(p.flow.today_income, "EUR"),
+    ),
+    PlantSensorDescription(
+        key="total_income",
+        translation_key="total_income",
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.TOTAL,
+        suggested_display_precision=2,
+        value_fn=lambda p: _vu_value(p.flow.total_income),
+        unit_fn=lambda p: _vu_unit(p.flow.total_income, "EUR"),
+    ),
+    PlantSensorDescription(
+        key="co2_reduced_total",
+        translation_key="co2_reduced_total",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        icon="mdi:molecule-co2",
+        value_fn=lambda p: _vu_value(p.flow.co2_reduced_total),
+        unit_fn=lambda p: _vu_unit(p.flow.co2_reduced_total, "t"),
+    ),
+    PlantSensorDescription(
+        key="plant_status",
+        translation_key="plant_status",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:solar-power-variant",
+        value_fn=lambda p: p.summary.status_text,
     ),
     PlantSensorDescription(
         key="last_update",
@@ -253,7 +299,10 @@ async def async_setup_entry(
 
     for ps_id, plant in (coordinator.data or {}).items():
         for desc in PLANT_SENSORS:
-            if desc.key.startswith("total_") and desc.value_fn(plant) is None:
+            if (
+                desc.key.startswith(("total_", "month_", "today_income", "co2_"))
+                and desc.value_fn(plant) is None
+            ):
                 continue
             entities.append(ISolarCloudPlantSensor(coordinator, ps_id, desc))
         for dev in plant.devices:
@@ -355,6 +404,31 @@ def _classify_point(
     return None, SensorStateClass.MEASUREMENT
 
 
+_DIAGNOSTIC_POINT_KEYWORDS: tuple[str, ...] = (
+    "wlan",
+    "signal",
+    "meter type",
+    "insulation",
+    "resistance",
+    "bms",
+    "max. charging",
+    "max. discharging",
+    "operating status",
+    "fault",
+    "alarm",
+    "firmware",
+    "software",
+    "version",
+    "serial",
+    "contactor",
+)
+
+
+def _is_diagnostic_point(name: str) -> bool:
+    lower = name.lower()
+    return any(keyword in lower for keyword in _DIAGNOSTIC_POINT_KEYWORDS)
+
+
 class ISolarCloudDevicePointSensor(ISolarCloudDeviceEntity, SensorEntity):
     """Generic telemetry sensor backed by /v1/devService/getDevicePoints."""
 
@@ -374,6 +448,10 @@ class ISolarCloudDevicePointSensor(ISolarCloudDeviceEntity, SensorEntity):
             dc, sc = _classify_point(pt)
             self._attr_device_class = dc
             self._attr_state_class = sc
+            if _is_diagnostic_point(pt.name):
+                self._attr_entity_category = EntityCategory.DIAGNOSTIC
+            if pt.is_numeric and pt.unit not in ("%", None):
+                self._attr_suggested_display_precision = 2
         else:
             self._attr_name = f"Point {point_id}"
 
