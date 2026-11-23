@@ -22,7 +22,7 @@ def test_manifest_and_hacs() -> None:
     assert manifest["domain"] == "py_sungrow_isolarcloud"
     assert manifest["config_flow"] is True
     assert manifest["iot_class"] == "cloud_polling"
-    assert "cryptography>=42.0.0" in manifest["requirements"]
+    assert manifest["requirements"] == []
     assert hacs["name"] == "Sungrow iSolarCloud"
 
 
