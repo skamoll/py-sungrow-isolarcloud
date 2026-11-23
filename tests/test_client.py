@@ -85,10 +85,34 @@ async def test_login_and_fetch_all_plants() -> None:
                             {
                                 "ps_key": "6116893_14_1_1",
                                 "device_name": "Inverter",
-                                "dev_status": 1,
+                                "device_type": 14,
+                                "device_status": 1,
+                                "fault_status": "4",
                             }
                         ]
                     },
+                },
+            ),
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "1",
+                    "result_msg": "success",
+                    "result_data": [
+                        {
+                            "point_id": 13003,
+                            "point_name": "Total DC power",
+                            "unit": "W",
+                            "value": "1200",
+                        },
+                        {
+                            "point_id": 13146,
+                            "point_name": "Operating status",
+                            "unit": "",
+                            "value": "Grid-connected operation",
+                            "flag": "enum",
+                        },
+                    ],
                 },
             ),
         ]
@@ -104,6 +128,8 @@ async def test_login_and_fetch_all_plants() -> None:
     assert plant.flow.battery_soc == 75.0
     assert len(plant.devices) == 1
     assert plant.devices[0].ps_key == "6116893_14_1_1"
+    assert plant.devices[0].points[13003].value == 1200.0
+    assert plant.devices[0].points[13146].value == "Grid-connected operation"
     assert session.calls[0][0] == "https://gateway.isolarcloud.eu/v1/userService/login"
 
 

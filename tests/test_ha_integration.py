@@ -19,6 +19,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.py_sungrow_isolarcloud.api.models import (
+    DevicePoint,
     DeviceSummary,
     PlantData,
     PlantFlow,
@@ -61,6 +62,16 @@ def _sample_plant_data() -> dict[str, PlantData]:
                     device_sn="SN123456",
                     device_type=14,
                     dev_status=1,
+                    fault_status="4",
+                    points={
+                        58603: DevicePoint(
+                            point_id=58603,
+                            name="Internal temperature",
+                            value=24.5,
+                            unit="°C",
+                            is_numeric=True,
+                        )
+                    },
                 )
             ],
         )
@@ -115,7 +126,7 @@ async def test_ha_setup_devices_entities_and_unload(tmp_path: Path) -> None:
 
         ent_reg = er.async_get(hass)
         entities = er.async_entries_for_config_entry(ent_reg, entry.entry_id)
-        assert len(entities) == 22
+        assert len(entities) == 25
         assert not any(e.entity_id.endswith("_2") for e in entities)
 
         pv_state = hass.states.get("sensor.casa_pv_power")

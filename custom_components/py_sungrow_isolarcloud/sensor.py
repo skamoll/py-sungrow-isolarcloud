@@ -18,7 +18,7 @@ from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfEnergy, UnitOf
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import DeviceSummary, PlantData, ValueUnit
+from .api import DevicePoint, DeviceSummary, PlantData, ValueUnit
 from .const import DOMAIN
 from .coordinator import ISolarCloudCoordinator
 from .entity import ISolarCloudDeviceEntity, ISolarCloudPlantEntity
@@ -257,6 +257,10 @@ async def async_setup_entry(
         for dev in plant.devices:
             for dev_desc in DEVICE_SENSORS:
                 entities.append(ISolarCloudDeviceSensor(coordinator, ps_id, dev.ps_key, dev_desc))
+            for point_id in sorted(dev.points):
+                entities.append(
+                    ISolarCloudDevicePointSensor(coordinator, ps_id, dev.ps_key, point_id)
+                )
 
     async_add_entities(entities)
 
@@ -311,3 +315,72 @@ class ISolarCloudDeviceSensor(ISolarCloudDeviceEntity, SensorEntity):
         if dev is None:
             return None
         return self.entity_description.value_fn(dev)
+
+
+_UNIT_DEVICE_CLASS: dict[str, tuple[SensorDeviceClass | None, SensorStateClass | None]] = {
+    "W": (SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT),
+    "kW": (SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT),
+    "MW": (SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT),
+    "Wh": (SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING),
+    "kWh": (SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING),
+    "MWh": (SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING),
+    "V": (SensorDeviceClass.VOLTAGE, SensorStateClass.MEASUREMENT),
+    "A": (SensorDeviceClass.CURRENT, SensorStateClass.MEASUREMENT),
+    "Hz": (SensorDeviceClass.FREQUENCY, SensorStateClass.MEASUREMENT),
+    "°C": (SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT),
+    "°F": (SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT),
+    "var": (SensorDeviceClass.REACTIVE_POWER, SensorStateClass.MEASUREMENT),
+    "VA": (SensorDeviceClass.APPARENT_POWER, SensorStateClass.MEASUREMENT),
+    "W/m²": (SensorDeviceClass.IRRADIANCE, SensorStateClass.MEASUREMENT),
+}
+
+
+def _classify_point(
+    point: DevicePoint,
+) -> tuple[SensorDeviceClass | None, SensorStateClass | None]:
+    if not point.is_numeric:
+        return None, None
+    if point.unit == "%":
+        lower_name = point.name.lower()
+        if "soc" in lower_name or "battery" in lower_name:
+            return SensorDeviceClass.BATTERY, SensorStateClass.MEASUREMENT
+        return None, SensorStateClass.MEASUREMENT
+    if point.unit and point.unit in _UNIT_DEVICE_CLASS:
+        return _UNIT_DEVICE_CLASS[point.unit]
+    return None, SensorStateClass.MEASUREMENT
+
+
+class ISolarCloudDevicePointSensor(ISolarCloudDeviceEntity, SensorEntity):
+    """Generic telemetry sensor backed by /v1/devService/getDevicePoints."""
+
+    def __init__(
+        self,
+        coordinator: ISolarCloudCoordinator,
+        ps_id: str,
+        ps_key: str,
+        point_id: int,
+    ) -> None:
+        super().__init__(coordinator, ps_id, ps_key, f"p{point_id}")
+        self._point_id = point_id
+        pt = self._current_point()
+        if pt is not None:
+            self._attr_name = pt.name
+            self._attr_native_unit_of_measurement = pt.unit
+            dc, sc = _classify_point(pt)
+            self._attr_device_class = dc
+            self._attr_state_class = sc
+        else:
+            self._attr_name = f"Point {point_id}"
+
+    def _current_point(self) -> DevicePoint | None:
+        dev = self.device_summary
+        if dev is None:
+            return None
+        return dev.points.get(self._point_id)
+
+    @property
+    def native_value(self) -> float | str | None:
+        pt = self._current_point()
+        if pt is None:
+            return None
+        return pt.value

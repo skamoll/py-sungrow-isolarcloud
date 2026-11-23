@@ -16,6 +16,7 @@ from .const import (
     DEFAULT_APP_KEY,
     DEFAULT_USER_AGENT,
     DEFAULT_WEB_VERSION,
+    ENDPOINT_GET_DEVICE_POINTS,
     ENDPOINT_GET_PS_ALL_DEVICE_LIST,
     ENDPOINT_GET_PS_DETAIL_WITH_PS_TYPE,
     ENDPOINT_GET_PS_LIST,
@@ -33,7 +34,14 @@ from .crypto import (
     generate_nonce,
     rsa_encrypt_base64,
 )
-from .models import AuthSession, DeviceSummary, PlantData, PlantFlow, PlantSummary
+from .models import (
+    AuthSession,
+    DevicePoint,
+    DeviceSummary,
+    PlantData,
+    PlantFlow,
+    PlantSummary,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -193,8 +201,30 @@ class ISolarCloudClient:
             if row.get("ps_key") or row.get("uuid")
         ]
 
+    async def async_get_device_points(
+        self, ps_key: str, device_type: int
+    ) -> dict[int, DevicePoint]:
+        """Fetch curated device telemetry points for any device_type."""
+        data = await self._call_authed(
+            ENDPOINT_GET_DEVICE_POINTS,
+            {
+                "ps_key": ps_key,
+                "device_type": str(device_type),
+            },
+        )
+        rows = data.get("result_data") or []
+        points: dict[int, DevicePoint] = {}
+        if isinstance(rows, list):
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                pt = DevicePoint.from_dict(row)
+                if pt is not None:
+                    points[pt.point_id] = pt
+        return points
+
     async def async_fetch_all_plants(self) -> dict[str, PlantData]:
-        """Fetch plant summaries, flows, and devices for all plants."""
+        """Fetch plant summaries, flows, devices, and device points for all plants."""
         if self._auth is None:
             await self.async_login()
         plants = await self.async_get_ps_list()
@@ -202,6 +232,17 @@ class ISolarCloudClient:
         for plant in plants:
             flow = await self.async_get_ps_detail_with_ps_type(plant.ps_id)
             devices = await self.async_get_ps_all_device_list(plant.ps_id)
+            for dev in devices:
+                if dev.device_type is not None:
+                    try:
+                        dev.points = await self.async_get_device_points(dev.ps_key, dev.device_type)
+                    except ISolarCloudError as err:
+                        _LOGGER.debug(
+                            "Could not fetch points for %s (type=%s): %s",
+                            dev.ps_key,
+                            dev.device_type,
+                            err,
+                        )
             output[plant.ps_id] = PlantData(summary=plant, flow=flow, devices=devices)
         return output
 

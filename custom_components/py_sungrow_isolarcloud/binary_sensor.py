@@ -26,8 +26,10 @@ async def async_setup_entry(
 
     for ps_id, plant in (coordinator.data or {}).items():
         entities.append(ISolarCloudPlantOnlineBinarySensor(coordinator, ps_id))
+        entities.append(ISolarCloudPlantFaultBinarySensor(coordinator, ps_id))
         for dev in plant.devices:
             entities.append(ISolarCloudDeviceOnlineBinarySensor(coordinator, ps_id, dev.ps_key))
+            entities.append(ISolarCloudDeviceFaultBinarySensor(coordinator, ps_id, dev.ps_key))
 
     async_add_entities(entities)
 
@@ -69,3 +71,42 @@ class ISolarCloudDeviceOnlineBinarySensor(ISolarCloudDeviceEntity, BinarySensorE
         if dev is None:
             return None
         return dev.is_online
+
+
+class ISolarCloudPlantFaultBinarySensor(ISolarCloudPlantEntity, BinarySensorEntity):
+    """Problem/fault binary sensor for a Sungrow plant."""
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_translation_key = "plant_fault"
+
+    def __init__(self, coordinator: ISolarCloudCoordinator, ps_id: str) -> None:
+        super().__init__(coordinator, ps_id, "fault")
+
+    @property
+    def is_on(self) -> bool | None:
+        plant = self.plant_data
+        if plant is None:
+            return None
+        return plant.flow.has_fault
+
+
+class ISolarCloudDeviceFaultBinarySensor(ISolarCloudDeviceEntity, BinarySensorEntity):
+    """Problem/fault binary sensor for a child Sungrow device."""
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_translation_key = "device_fault"
+
+    def __init__(
+        self,
+        coordinator: ISolarCloudCoordinator,
+        ps_id: str,
+        ps_key: str,
+    ) -> None:
+        super().__init__(coordinator, ps_id, ps_key, "fault")
+
+    @property
+    def is_on(self) -> bool | None:
+        dev = self.device_summary
+        if dev is None:
+            return None
+        return dev.has_fault

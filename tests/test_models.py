@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from custom_components.py_sungrow_isolarcloud.api.models import (
+    DevicePoint,
     DeviceSummary,
     PlantFlow,
     PlantSummary,
@@ -101,3 +102,36 @@ def test_device_summary() -> None:
     assert dev.ps_key == "6116893_14_1_1"
     assert dev.is_online is True
     assert dev.device_model == "SH6.0RS"
+    assert dev.has_fault is False
+
+
+def test_device_point_parsing() -> None:
+    """DevicePoint skips '--', normalizes units, and distinguishes numeric vs enum."""
+    assert DevicePoint.from_dict({"point_id": 8084, "value": "--"}) is None
+
+    temp = DevicePoint.from_dict(
+        {
+            "point_id": 58603,
+            "point_name": "Battery temperature",
+            "unit": "℃",
+            "value": "21.5",
+        }
+    )
+    assert temp is not None
+    assert temp.unit == "°C"
+    assert temp.value == 21.5
+    assert temp.is_numeric is True
+
+    enum_pt = DevicePoint.from_dict(
+        {
+            "point_id": 13146,
+            "point_name": "Operating status",
+            "unit": "",
+            "value": "Grid-connected operation",
+            "flag": "enum",
+        }
+    )
+    assert enum_pt is not None
+    assert enum_pt.is_numeric is False
+    assert enum_pt.is_enum is True
+    assert enum_pt.value == "Grid-connected operation"

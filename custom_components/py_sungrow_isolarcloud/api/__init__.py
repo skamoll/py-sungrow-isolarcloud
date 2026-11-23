@@ -8,10 +8,19 @@ from .client import (
     ISolarCloudError,
 )
 from .const import GATEWAY_AUTO, GATEWAYS
-from .models import AuthSession, DeviceSummary, PlantData, PlantFlow, PlantSummary, ValueUnit
+from .models import (
+    AuthSession,
+    DevicePoint,
+    DeviceSummary,
+    PlantData,
+    PlantFlow,
+    PlantSummary,
+    ValueUnit,
+)
 
 __all__ = [
     "AuthSession",
+    "DevicePoint",
     "DeviceSummary",
     "GATEWAYS",
     "GATEWAY_AUTO",

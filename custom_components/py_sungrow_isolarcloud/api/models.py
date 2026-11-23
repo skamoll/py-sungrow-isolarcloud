@@ -147,6 +147,12 @@ class PlantFlow:
     total_load_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
     design_capacity_kwp: float | None = None
     last_update_time: str | None = None
+    ps_fault_status: str | None = None
+
+    @property
+    def has_fault(self) -> bool:
+        """Return True when plant fault status indicates an active fault or alarm."""
+        return self.ps_fault_status in ("1", "2")
 
     @classmethod
     def from_detail_dict(cls, data: dict[str, Any]) -> PlantFlow:
@@ -227,6 +233,66 @@ class PlantFlow:
             ).in_kwh(),
             design_capacity_kwp=cap.value,
             last_update_time=data.get("data_last_update_time") or data.get("update_time"),
+            ps_fault_status=(
+                str(data.get("ps_fault_status"))
+                if data.get("ps_fault_status") is not None
+                else None
+            ),
+        )
+
+
+@dataclass(slots=True)
+class DevicePoint:
+    """Generic curated device telemetry point from /v1/devService/getDevicePoints."""
+
+    point_id: int
+    name: str
+    value: float | str | None
+    unit: str | None = None
+    is_numeric: bool = False
+    is_enum: bool = False
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> DevicePoint | None:
+        """Parse one getDevicePoints row, returning None for unsupported '--' points."""
+        point_id_raw = data.get("point_id")
+        if point_id_raw is None:
+            return None
+        try:
+            point_id = int(point_id_raw)
+        except (TypeError, ValueError):
+            return None
+
+        raw_val = data.get("value")
+        if raw_val is None or str(raw_val).strip() in ("", "--"):
+            return None
+
+        name = str(
+            data.get("alias_point_name") or data.get("point_name") or f"Point {point_id}"
+        ).strip()
+        unit = normalize_unit(data.get("unit"))
+        is_enum = str(data.get("flag") or "").lower() == "enum"
+
+        parsed_num = None if is_enum else parse_float(raw_val)
+        if parsed_num is not None:
+            return cls(
+                point_id=point_id,
+                name=name,
+                value=parsed_num,
+                unit=unit,
+                is_numeric=True,
+                is_enum=False,
+            )
+
+        desc = str(data.get("value_description") or "").strip()
+        text_val = desc if desc and is_enum else str(raw_val).strip()
+        return cls(
+            point_id=point_id,
+            name=name,
+            value=text_val,
+            unit=None,
+            is_numeric=False,
+            is_enum=is_enum,
         )
 
 
@@ -242,12 +308,19 @@ class DeviceSummary:
     device_sn: str | None = None
     device_type: int | None = None
     dev_status: int | None = None
+    fault_status: str | None = None
     firmware_version: str | None = None
+    points: dict[int, DevicePoint] = field(default_factory=dict)
 
     @property
     def is_online(self) -> bool:
         """Return True when device status indicates online/normal."""
         return self.dev_status == 1
+
+    @property
+    def has_fault(self) -> bool:
+        """Return True when device fault status indicates an active fault or alarm."""
+        return self.fault_status in ("1", "2")
 
     @classmethod
     def from_dict(cls, ps_id: str, data: dict[str, Any]) -> DeviceSummary:
@@ -268,6 +341,9 @@ class DeviceSummary:
             device_sn=data.get("device_sn") or data.get("sn"),
             device_type=int(dev_type_raw) if dev_type_raw is not None else None,
             dev_status=int(status_raw) if status_raw is not None else None,
+            fault_status=(
+                str(data.get("fault_status")) if data.get("fault_status") is not None else None
+            ),
             firmware_version=data.get("firmware_version_info") or data.get("soft_version"),
         )
 

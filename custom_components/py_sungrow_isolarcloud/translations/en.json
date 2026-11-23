@@ -69,7 +69,9 @@
     },
     "binary_sensor": {
       "plant_online": { "name": "Online" },
-      "device_online": { "name": "Online" }
+      "plant_fault": { "name": "Fault" },
+      "device_online": { "name": "Online" },
+      "device_fault": { "name": "Fault" }
     }
   }
 }
