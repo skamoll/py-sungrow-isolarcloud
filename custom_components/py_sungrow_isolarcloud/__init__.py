@@ -15,6 +15,27 @@ from .entity import format_plant_device_name
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON]
 
+_ISOLARCLOUD_LANG_MAP: dict[str, str] = {
+    "cs": "_cs_CZ",
+    "de": "_de_DE",
+    "en": "_en_US",
+    "es": "_es_ES",
+    "fr": "_fr_FR",
+    "id": "_id_ID",
+    "it": "_it_IT",
+    "ja": "_ja_JP",
+    "ko": "_ko_KR",
+    "nl": "_nl_NL",
+}
+
+
+def _resolve_isolarcloud_lang(language: str | None) -> str:
+    """Map Home Assistant UI language to supported iSolarCloud API lang code."""
+    if not language:
+        return "_en_US"
+    prefix = language.split("-")[0].split("_")[0].lower()
+    return _ISOLARCLOUD_LANG_MAP.get(prefix, "_en_US")
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Sungrow iSolarCloud from a config entry."""
@@ -24,6 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         username=entry.data[CONF_USERNAME],
         password=entry.data[CONF_PASSWORD],
         gateway=entry.data.get(CONF_GATEWAY, GATEWAY_AUTO),
+        lang=_resolve_isolarcloud_lang(hass.config.language),
     )
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     coordinator = ISolarCloudCoordinator(

@@ -485,19 +485,31 @@ def _classify_point(
 _DIAGNOSTIC_POINT_KEYWORDS: tuple[str, ...] = (
     "wlan",
     "signal",
+    "señal",
     "meter type",
+    "tipo de contador",
     "insulation",
+    "aislamiento",
+    "impedancia",
     "resistance",
+    "resistencia",
     "bms",
     "max. charging",
     "max. discharging",
+    "carga máx",
+    "descarga máx",
     "operating status",
+    "estado de ejecución",
     "fault",
+    "fallo",
     "alarm",
+    "alarma",
     "firmware",
     "software",
     "version",
+    "versión",
     "serial",
+    "serie",
     "contactor",
 )
 
@@ -538,6 +550,13 @@ class ISolarCloudDevicePointSensor(ISolarCloudDeviceEntity, SensorEntity):
         if dev is None:
             return None
         return dev.points.get(self._point_id)
+
+    @property
+    def name(self) -> str | None:
+        pt = self._current_point()
+        if pt is not None:
+            return pt.name
+        return self._attr_name
 
     @property
     def native_value(self) -> float | str | None:

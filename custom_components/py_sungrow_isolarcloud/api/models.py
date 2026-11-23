@@ -174,28 +174,28 @@ class PlantFlow:
         """Return positive grid import power in kW (0.0 when exporting)."""
         if self.grid_power.value is None:
             return None
-        return round(max(self.grid_power.value, 0.0), 4)
+        return round(max(self.grid_power.value, 0.0), 4) + 0.0
 
     @property
     def grid_export_power_kw(self) -> float | None:
         """Return positive grid export power in kW (0.0 when importing)."""
         if self.grid_power.value is None:
             return None
-        return round(max(-self.grid_power.value, 0.0), 4)
+        return round(max(-self.grid_power.value, 0.0), 4) + 0.0
 
     @property
     def battery_charge_power_kw(self) -> float | None:
         """Return positive battery charging power in kW (0.0 when discharging)."""
         if self.battery_power.value is None:
             return None
-        return round(max(self.battery_power.value, 0.0), 4)
+        return round(max(self.battery_power.value, 0.0), 4) + 0.0
 
     @property
     def battery_discharge_power_kw(self) -> float | None:
         """Return positive battery discharging power in kW (0.0 when charging)."""
         if self.battery_power.value is None:
             return None
-        return round(max(-self.battery_power.value, 0.0), 4)
+        return round(max(-self.battery_power.value, 0.0), 4) + 0.0
 
     @classmethod
     def from_detail_dict(cls, data: dict[str, Any]) -> PlantFlow:
