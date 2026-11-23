@@ -47,7 +47,7 @@
   "entity": {
     "sensor": {
       "pv_power": { "name": "PV power" },
-      "load_power": { "name": "Load power" },
+      "load_power": { "name": "House load power" },
       "grid_power": { "name": "Grid power" },
       "battery_power": { "name": "Battery power" },
       "battery_soc": { "name": "Battery SoC" },
@@ -61,11 +61,11 @@
       "total_grid_import": { "name": "Total grid import" },
       "daily_grid_export": { "name": "Daily grid export" },
       "total_grid_export": { "name": "Total grid export" },
-      "daily_load_energy": { "name": "Daily consumption" },
-      "total_load_energy": { "name": "Total consumption" },
+      "daily_load_energy": { "name": "Daily house consumption" },
+      "total_load_energy": { "name": "Total house consumption" },
       "installed_capacity": { "name": "Installed capacity" },
       "last_update": { "name": "Last update" },
-      "device_status_code": { "name": "Status code" }
+      "device_status_code": { "name": "Device status code" }
     },
     "binary_sensor": {
       "plant_online": { "name": "Online" },

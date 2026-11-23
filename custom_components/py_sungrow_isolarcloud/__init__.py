@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import GATEWAY_AUTO, ISolarCloudClient
 from .const import CONF_GATEWAY, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .coordinator import ISolarCloudCoordinator
+from .entity import format_plant_device_name
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
@@ -39,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             identifiers={(DOMAIN, f"plant_{ps_id}")},
             manufacturer="Sungrow",
             model="Power Station",
-            name=plant.summary.ps_name,
+            name=format_plant_device_name(plant.summary.ps_name, ps_id),
         )
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator

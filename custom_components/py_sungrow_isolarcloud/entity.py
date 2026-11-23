@@ -13,6 +13,14 @@ from .const import DOMAIN
 from .coordinator import ISolarCloudCoordinator
 
 
+def format_plant_device_name(ps_name: str | None, ps_id: str) -> str:
+    """Return a consistent PV-prefixed plant device name."""
+    raw = (ps_name or "").strip() or f"Plant {ps_id}"
+    if raw.lower().startswith("pv "):
+        return raw
+    return f"PV {raw}"
+
+
 class ISolarCloudPlantEntity(CoordinatorEntity[ISolarCloudCoordinator]):
     """Base entity attached to a Sungrow Plant device."""
 
@@ -39,7 +47,7 @@ class ISolarCloudPlantEntity(CoordinatorEntity[ISolarCloudCoordinator]):
     def device_info(self) -> DeviceInfo:
         """Return stable Plant DeviceInfo."""
         plant = self.plant_data
-        name = plant.summary.ps_name if plant else f"Plant {self._ps_id}"
+        name = format_plant_device_name(plant.summary.ps_name if plant else None, self._ps_id)
         return DeviceInfo(
             identifiers={(DOMAIN, f"plant_{self._ps_id}")},
             manufacturer="Sungrow",

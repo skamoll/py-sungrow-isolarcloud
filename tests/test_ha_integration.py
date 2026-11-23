@@ -129,20 +129,20 @@ async def test_ha_setup_devices_entities_and_unload(tmp_path: Path) -> None:
         assert len(entities) == 20
         assert not any(e.entity_id.endswith("_2") for e in entities)
 
-        last_update_state = hass.states.get("sensor.casa_last_update")
+        last_update_state = hass.states.get("sensor.pv_casa_last_update")
         assert last_update_state is not None
         assert last_update_state.state not in ("unknown", "unavailable")
 
-        pv_state = hass.states.get("sensor.casa_pv_power")
+        pv_state = hass.states.get("sensor.pv_casa_pv_power")
         assert pv_state is not None
         assert pv_state.state == "2.45"
         assert pv_state.attributes["unit_of_measurement"] == "kW"
 
-        soc_state = hass.states.get("sensor.casa_battery_soc")
+        soc_state = hass.states.get("sensor.pv_casa_battery_soc")
         assert soc_state is not None
         assert soc_state.state == "88.0"
 
-        online_state = hass.states.get("binary_sensor.casa_online")
+        online_state = hass.states.get("binary_sensor.pv_casa_online")
         assert online_state is not None
         assert online_state.state == "on"
 
