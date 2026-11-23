@@ -126,8 +126,12 @@ async def test_ha_setup_devices_entities_and_unload(tmp_path: Path) -> None:
 
         ent_reg = er.async_get(hass)
         entities = er.async_entries_for_config_entry(ent_reg, entry.entry_id)
-        assert len(entities) == 25
+        assert len(entities) == 20
         assert not any(e.entity_id.endswith("_2") for e in entities)
+
+        last_update_state = hass.states.get("sensor.casa_last_update")
+        assert last_update_state is not None
+        assert last_update_state.state not in ("unknown", "unavailable")
 
         pv_state = hass.states.get("sensor.casa_pv_power")
         assert pv_state is not None

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -77,14 +80,23 @@ class ISolarCloudDeviceEntity(CoordinatorEntity[ISolarCloudCoordinator]):
 
     @property
     def device_info(self) -> DeviceInfo:
-        """Return stable child DeviceInfo linked to its Plant via via_device."""
+        """Return stable child DeviceInfo linked to its Plant."""
         dev = self.device_summary
-        return DeviceInfo(
-            identifiers={(DOMAIN, f"device_{self._ps_key}")},
-            via_device=(DOMAIN, f"plant_{self._ps_id}"),
-            manufacturer="Sungrow",
-            model=(dev.device_model if dev and dev.device_model else "Sungrow Device"),
-            name=(dev.device_name if dev else self._ps_key),
-            serial_number=(dev.device_sn if dev else None),
-            sw_version=(dev.firmware_version if dev else None),
-        )
+        kwargs: dict[str, Any] = {
+            "identifiers": {(DOMAIN, f"device_{self._ps_key}")},
+            "manufacturer": "Sungrow",
+            "model": (dev.device_model if dev and dev.device_model else "Sungrow Device"),
+            "name": (dev.device_name if dev else self._ps_key),
+            "serial_number": (dev.device_sn if dev else None),
+            "sw_version": (dev.firmware_version if dev else None),
+        }
+        if "via_device_id" in DeviceInfo.__annotations__:
+            if self.hass is not None:
+                plant_dev = dr.async_get(self.hass).async_get_device(
+                    identifiers={(DOMAIN, f"plant_{self._ps_id}")}
+                )
+                if plant_dev is not None:
+                    kwargs["via_device_id"] = plant_dev.id
+        else:
+            kwargs["via_device"] = (DOMAIN, f"plant_{self._ps_id}")
+        return DeviceInfo(**kwargs)

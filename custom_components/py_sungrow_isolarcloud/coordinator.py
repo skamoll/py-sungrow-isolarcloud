@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import (
     ISolarCloudApiError,
@@ -37,10 +38,13 @@ class ISolarCloudCoordinator(DataUpdateCoordinator[dict[str, PlantData]]):
             update_interval=timedelta(seconds=scan_interval_seconds),
         )
         self.client = client
+        self.last_sync_utc: datetime | None = None
 
     async def _async_update_data(self) -> dict[str, PlantData]:
         try:
-            return await self.client.async_fetch_all_plants()
+            data = await self.client.async_fetch_all_plants()
+            self.last_sync_utc = dt_util.utcnow()
+            return data
         except ISolarCloudAuthError as err:
             raise ConfigEntryAuthFailed(f"Authentication failed: {err}") from err
         except (ISolarCloudConnectionError, ISolarCloudApiError) as err:

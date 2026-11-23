@@ -228,7 +228,9 @@ class PlantFlow:
                 "kWh",
             ).in_kwh(),
             total_load_energy=ValueUnit.from_raw(
-                data.get("total_use_energy"),
+                data.get("total_use_energy")
+                or data.get("p83124_map_virgin")
+                or data.get("p83124_map"),
                 "kWh",
             ).in_kwh(),
             design_capacity_kwp=cap.value,

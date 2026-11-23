@@ -253,6 +253,8 @@ async def async_setup_entry(
 
     for ps_id, plant in (coordinator.data or {}).items():
         for desc in PLANT_SENSORS:
+            if desc.key.startswith("total_") and desc.value_fn(plant) is None:
+                continue
             entities.append(ISolarCloudPlantSensor(coordinator, ps_id, desc))
         for dev in plant.devices:
             for dev_desc in DEVICE_SENSORS:
@@ -284,7 +286,10 @@ class ISolarCloudPlantSensor(ISolarCloudPlantEntity, SensorEntity):
         plant = self.plant_data
         if plant is None:
             return None
-        return self.entity_description.value_fn(plant)
+        value = self.entity_description.value_fn(plant)
+        if value is None and self.entity_description.key == "last_update":
+            return self.coordinator.last_sync_utc
+        return value
 
     @property
     def native_unit_of_measurement(self) -> str | None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import GATEWAY_AUTO, ISolarCloudClient
@@ -30,6 +31,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         scan_interval_seconds=scan_interval,
     )
     await coordinator.async_config_entry_first_refresh()
+
+    device_reg = dr.async_get(hass)
+    for ps_id, plant in (coordinator.data or {}).items():
+        device_reg.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, f"plant_{ps_id}")},
+            manufacturer="Sungrow",
+            model="Power Station",
+            name=plant.summary.ps_name,
+        )
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
