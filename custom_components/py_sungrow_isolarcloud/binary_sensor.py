@@ -132,7 +132,7 @@ class ISolarCloudDeviceFaultBinarySensor(ISolarCloudDeviceEntity, BinarySensorEn
 
     @property
     def extra_state_attributes(self) -> dict[str, object] | None:
-        plant = self.plant_data
+        plant = self.coordinator.data.get(self._ps_id) if self.coordinator.data else None
         dev = self.device_summary
         if plant is None or dev is None or not plant.active_faults:
             return None

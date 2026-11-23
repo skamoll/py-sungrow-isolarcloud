@@ -46,41 +46,41 @@
   },
   "entity": {
     "sensor": {
-      "pv_power": { "name": "PV power" },
-      "load_power": { "name": "House load power" },
-      "grid_power": { "name": "Grid power" },
-      "battery_power": { "name": "Battery power" },
-      "battery_soc": { "name": "Battery SoC" },
-      "daily_pv_energy": { "name": "Daily PV energy" },
-      "total_pv_energy": { "name": "Total PV energy" },
-      "daily_battery_charge": { "name": "Daily battery charge" },
-      "total_battery_charge": { "name": "Total battery charge" },
-      "daily_battery_discharge": { "name": "Daily battery discharge" },
-      "total_battery_discharge": { "name": "Total battery discharge" },
-      "daily_grid_import": { "name": "Daily grid import" },
-      "total_grid_import": { "name": "Total grid import" },
-      "daily_grid_export": { "name": "Daily grid export" },
-      "total_grid_export": { "name": "Total grid export" },
-      "daily_load_energy": { "name": "Daily house consumption" },
-      "total_load_energy": { "name": "Total house consumption" },
-      "month_pv_energy": { "name": "Monthly PV energy" },
-      "today_income": { "name": "Today income" },
-      "total_income": { "name": "Total income" },
-      "co2_reduced_total": { "name": "CO2 reduced total" },
-      "plant_status": { "name": "Plant status" },
-      "plant_temperature": { "name": "Plant temperature" },
-      "installed_capacity": { "name": "Installed capacity" },
-      "last_update": { "name": "Last update" },
-      "device_status_code": { "name": "Device status code" }
+      "pv_power": { "name": "Potencia fotovoltaica" },
+      "load_power": { "name": "Consumo de la casa" },
+      "grid_power": { "name": "Potencia de red" },
+      "battery_power": { "name": "Potencia de batería" },
+      "battery_soc": { "name": "Carga de batería" },
+      "daily_pv_energy": { "name": "Producción fotovoltaica hoy" },
+      "total_pv_energy": { "name": "Producción fotovoltaica total" },
+      "daily_battery_charge": { "name": "Carga de batería hoy" },
+      "total_battery_charge": { "name": "Carga de batería total" },
+      "daily_battery_discharge": { "name": "Descarga de batería hoy" },
+      "total_battery_discharge": { "name": "Descarga de batería total" },
+      "daily_grid_import": { "name": "Importación de red hoy" },
+      "total_grid_import": { "name": "Importación de red total" },
+      "daily_grid_export": { "name": "Exportación a red hoy" },
+      "total_grid_export": { "name": "Exportación a red total" },
+      "daily_load_energy": { "name": "Consumo de la casa hoy" },
+      "total_load_energy": { "name": "Consumo de la casa total" },
+      "month_pv_energy": { "name": "Producción fotovoltaica este mes" },
+      "today_income": { "name": "Ingresos hoy" },
+      "total_income": { "name": "Ingresos totales" },
+      "co2_reduced_total": { "name": "CO2 evitado total" },
+      "plant_status": { "name": "Estado de la planta" },
+      "plant_temperature": { "name": "Temperatura de la planta" },
+      "installed_capacity": { "name": "Capacidad instalada" },
+      "last_update": { "name": "Última actualización" },
+      "device_status_code": { "name": "Código de estado" }
     },
     "binary_sensor": {
-      "plant_online": { "name": "Online" },
-      "plant_fault": { "name": "Fault" },
-      "device_online": { "name": "Online" },
-      "device_fault": { "name": "Fault" }
+      "plant_online": { "name": "En línea" },
+      "plant_fault": { "name": "Fallo" },
+      "device_online": { "name": "En línea" },
+      "device_fault": { "name": "Fallo" }
     },
     "button": {
-      "refresh": { "name": "Refresh data" }
+      "refresh": { "name": "Actualizar datos" }
     }
   }
 }
