@@ -89,6 +89,25 @@ class ISolarCloudPlantFaultBinarySensor(ISolarCloudPlantEntity, BinarySensorEnti
             return None
         return plant.flow.has_fault
 
+    @property
+    def extra_state_attributes(self) -> dict[str, object] | None:
+        plant = self.plant_data
+        if plant is None or not plant.active_faults:
+            return None
+        return {
+            "fault_count": len(plant.active_faults),
+            "faults": [
+                {
+                    "fault_code": f.fault_code,
+                    "fault_name": f.fault_name,
+                    "fault_level": f.fault_level,
+                    "device_name": f.device_name,
+                    "occur_time": f.occur_time,
+                }
+                for f in plant.active_faults
+            ],
+        }
+
 
 class ISolarCloudDeviceFaultBinarySensor(ISolarCloudDeviceEntity, BinarySensorEntity):
     """Problem/fault binary sensor for a child Sungrow device."""
@@ -110,3 +129,29 @@ class ISolarCloudDeviceFaultBinarySensor(ISolarCloudDeviceEntity, BinarySensorEn
         if dev is None:
             return None
         return dev.has_fault
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object] | None:
+        plant = self.plant_data
+        dev = self.device_summary
+        if plant is None or dev is None or not plant.active_faults:
+            return None
+        matching = [
+            f
+            for f in plant.active_faults
+            if f.ps_key == dev.ps_key or (f.device_name and f.device_name == dev.device_name)
+        ]
+        if not matching:
+            return None
+        return {
+            "fault_count": len(matching),
+            "faults": [
+                {
+                    "fault_code": f.fault_code,
+                    "fault_name": f.fault_name,
+                    "fault_level": f.fault_level,
+                    "occur_time": f.occur_time,
+                }
+                for f in matching
+            ],
+        }

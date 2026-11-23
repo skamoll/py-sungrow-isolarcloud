@@ -68,6 +68,7 @@
       "total_income": { "name": "Total income" },
       "co2_reduced_total": { "name": "CO2 reduced total" },
       "plant_status": { "name": "Plant status" },
+      "plant_temperature": { "name": "Plant temperature" },
       "installed_capacity": { "name": "Installed capacity" },
       "last_update": { "name": "Last update" },
       "device_status_code": { "name": "Device status code" }

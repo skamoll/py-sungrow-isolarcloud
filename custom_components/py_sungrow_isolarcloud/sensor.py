@@ -14,7 +14,13 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfEnergy, UnitOfPower
+from homeassistant.const import (
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -270,6 +276,16 @@ PLANT_SENSORS: tuple[PlantSensorDescription, ...] = (
         value_fn=lambda p: p.summary.status_text,
     ),
     PlantSensorDescription(
+        key="plant_temperature",
+        translation_key="plant_temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        suggested_display_precision=1,
+        value_fn=lambda p: p.weather.temperature_c if p.weather else None,
+    ),
+    PlantSensorDescription(
         key="last_update",
         translation_key="last_update",
         device_class=SensorDeviceClass.TIMESTAMP,
@@ -300,7 +316,9 @@ async def async_setup_entry(
     for ps_id, plant in (coordinator.data or {}).items():
         for desc in PLANT_SENSORS:
             if (
-                desc.key.startswith(("total_", "month_", "today_income", "co2_"))
+                desc.key.startswith(
+                    ("total_", "month_", "today_income", "co2_", "plant_temperature")
+                )
                 and desc.value_fn(plant) is None
             ):
                 continue
@@ -339,6 +357,18 @@ class ISolarCloudPlantSensor(ISolarCloudPlantEntity, SensorEntity):
         if value is None and self.entity_description.key == "last_update":
             return self.coordinator.last_sync_utc
         return value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        plant = self.plant_data
+        if plant is None or self.entity_description.key != "plant_temperature" or not plant.weather:
+            return None
+        return {
+            "high_temperature_c": plant.weather.high_temperature_c,
+            "low_temperature_c": plant.weather.low_temperature_c,
+            "sunrise": plant.weather.sunrise,
+            "weather_code": plant.weather.weather_code,
+        }
 
     @property
     def native_unit_of_measurement(self) -> str | None:

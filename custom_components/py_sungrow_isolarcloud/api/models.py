@@ -161,6 +161,7 @@ class PlantFlow:
     design_capacity_kwp: float | None = None
     last_update_time: str | None = None
     ps_fault_status: str | None = None
+    has_charging_pile: bool = False
 
     @property
     def has_fault(self) -> bool:
@@ -259,6 +260,15 @@ class PlantFlow:
                 str(data.get("ps_fault_status"))
                 if data.get("ps_fault_status") is not None
                 else None
+            ),
+            has_charging_pile=bool(
+                int(
+                    parse_float(
+                        data.get("has_charging_pile")
+                        or (data.get("ps_energy_graph_data") or {}).get("has_charging_pile")
+                    )
+                    or 0
+                )
             ),
         )
 
@@ -371,9 +381,106 @@ class DeviceSummary:
 
 
 @dataclass(slots=True)
+class ActiveFault:
+    """Active fault/alarm entry from /v1/faultService/queryFaultList."""
+
+    fault_code: str | None = None
+    fault_name: str | None = None
+    fault_level: str | None = None
+    device_name: str | None = None
+    ps_key: str | None = None
+    occur_time: str | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ActiveFault:
+        """Parse a fault row into ActiveFault."""
+        return cls(
+            fault_code=(
+                str(data.get("fault_code")) if data.get("fault_code") is not None else None
+            ),
+            fault_name=data.get("fault_name") or data.get("fault_desc"),
+            fault_level=(
+                str(data.get("fault_level_name") or data.get("fault_level"))
+                if (data.get("fault_level_name") or data.get("fault_level")) is not None
+                else None
+            ),
+            device_name=data.get("device_name"),
+            ps_key=str(data.get("ps_key")) if data.get("ps_key") is not None else None,
+            occur_time=data.get("create_time") or data.get("occur_time"),
+        )
+
+
+@dataclass(slots=True)
+class PlantWeather:
+    """Local plant weather from /v1/powerStationService/getPsWeatherInfo."""
+
+    temperature_c: float | None = None
+    high_temperature_c: float | None = None
+    low_temperature_c: float | None = None
+    sunrise: str | None = None
+    weather_code: str | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> PlantWeather:
+        """Parse getPsWeatherInfo result_data into PlantWeather."""
+        w_map = data.get("weather_map") or {}
+        w_list = data.get("weather_info_list") or []
+        today = w_list[0] if isinstance(w_list, list) and w_list else {}
+        temp = parse_float(
+            w_map.get("current_temperature_c")
+            if w_map.get("current_temperature_c") is not None
+            else today.get("current_temperature")
+        )
+        return cls(
+            temperature_c=temp,
+            high_temperature_c=parse_float(today.get("high_temperature")),
+            low_temperature_c=parse_float(today.get("low_temperature")),
+            sunrise=w_map.get("sunrise"),
+            weather_code=(
+                str(w_map.get("weather_code") or today.get("weather_code"))
+                if (w_map.get("weather_code") or today.get("weather_code")) is not None
+                else None
+            ),
+        )
+
+
+@dataclass(slots=True)
+class ChargingPileSummary:
+    """EV charger summary from /v1/devService/getChargingPileList."""
+
+    pile_sn: str
+    pile_name: str
+    status: str | None = None
+    charging_power_kw: float | None = None
+    charging_energy_kwh: float | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChargingPileSummary:
+        """Parse a charging pile row into ChargingPileSummary."""
+        sn = str(data.get("charging_pile_sn") or data.get("sn") or data.get("uuid") or "")
+        power = ValueUnit.from_raw(data.get("charging_power"), "kW").in_kw()
+        energy = ValueUnit.from_raw(data.get("charging_energy"), "kWh").in_kwh()
+        return cls(
+            pile_sn=sn,
+            pile_name=str(data.get("charging_pile_name") or sn or "EV Charger"),
+            status=(
+                str(data.get("charging_pile_status"))
+                if data.get("charging_pile_status") is not None
+                else None
+            ),
+            charging_power_kw=power.value,
+            charging_energy_kwh=energy.value,
+        )
+
+
+@dataclass(slots=True)
 class PlantData:
     """Combined plant snapshot consumed by Home Assistant entities."""
 
     summary: PlantSummary
     flow: PlantFlow
     devices: list[DeviceSummary] = field(default_factory=list)
+    active_faults: list[ActiveFault] = field(default_factory=list)
+    weather: PlantWeather | None = None
+    charging_piles: list[ChargingPileSummary] = field(default_factory=list)
+    battery_info: dict[str, Any] | None = None

@@ -42,7 +42,7 @@ async def async_get_config_entry_diagnostics(
                     "device_model": dev.device_model,
                     "type_name": dev.type_name,
                     "dev_status": dev.dev_status,
-                    "dev_fault_status": dev.dev_fault_status,
+                    "fault_status": dev.fault_status,
                     "point_count": len(dev.points),
                     "points": {
                         str(pid): {
@@ -55,6 +55,10 @@ async def async_get_config_entry_diagnostics(
                 }
                 for dev in plant.devices
             ],
+            "active_faults": [asdict(f) for f in plant.active_faults],
+            "weather": asdict(plant.weather) if plant.weather else None,
+            "charging_piles": [asdict(p) for p in plant.charging_piles],
+            "battery_info": plant.battery_info,
         }
 
     return {

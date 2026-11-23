@@ -9,17 +9,22 @@ from .client import (
 )
 from .const import GATEWAY_AUTO, GATEWAYS
 from .models import (
+    ActiveFault,
     AuthSession,
+    ChargingPileSummary,
     DevicePoint,
     DeviceSummary,
     PlantData,
     PlantFlow,
     PlantSummary,
+    PlantWeather,
     ValueUnit,
 )
 
 __all__ = [
+    "ActiveFault",
     "AuthSession",
+    "ChargingPileSummary",
     "DevicePoint",
     "DeviceSummary",
     "GATEWAYS",
@@ -32,5 +37,6 @@ __all__ = [
     "PlantData",
     "PlantFlow",
     "PlantSummary",
+    "PlantWeather",
     "ValueUnit",
 ]

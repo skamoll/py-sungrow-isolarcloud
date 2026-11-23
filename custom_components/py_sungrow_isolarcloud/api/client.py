@@ -16,11 +16,15 @@ from .const import (
     DEFAULT_APP_KEY,
     DEFAULT_USER_AGENT,
     DEFAULT_WEB_VERSION,
+    ENDPOINT_GET_CHARGING_PILE_LIST,
     ENDPOINT_GET_DEVICE_POINTS,
     ENDPOINT_GET_PS_ALL_DEVICE_LIST,
+    ENDPOINT_GET_PS_BATTERY_INFO,
     ENDPOINT_GET_PS_DETAIL_WITH_PS_TYPE,
     ENDPOINT_GET_PS_LIST,
+    ENDPOINT_GET_PS_WEATHER_INFO,
     ENDPOINT_LOGIN,
+    ENDPOINT_QUERY_FAULT_LIST,
     GATEWAY_AUTO,
     GATEWAYS,
 )
@@ -35,12 +39,15 @@ from .crypto import (
     rsa_encrypt_base64,
 )
 from .models import (
+    ActiveFault,
     AuthSession,
+    ChargingPileSummary,
     DevicePoint,
     DeviceSummary,
     PlantData,
     PlantFlow,
     PlantSummary,
+    PlantWeather,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -223,6 +230,46 @@ class ISolarCloudClient:
                     points[pt.point_id] = pt
         return points
 
+    async def async_get_active_faults(self, ps_id: str) -> list[ActiveFault]:
+        """Fetch active/open faults for a plant."""
+        data = await self._call_authed(
+            ENDPOINT_QUERY_FAULT_LIST,
+            {"ps_id": ps_id, "curPage": "1", "size": "20", "process_status": "8"},
+        )
+        result_data = data.get("result_data") or {}
+        rows = result_data.get("pageList") or result_data.get("list") or []
+        return [ActiveFault.from_dict(row) for row in rows if isinstance(row, dict)]
+
+    async def async_get_ps_weather_info(self, ps_id: str) -> PlantWeather | None:
+        """Fetch local plant weather summary."""
+        data = await self._call_authed(ENDPOINT_GET_PS_WEATHER_INFO, {"ps_id": ps_id})
+        result_data = data.get("result_data")
+        if not isinstance(result_data, dict):
+            return None
+        return PlantWeather.from_dict(result_data)
+
+    async def async_get_charging_piles(self, ps_id: str) -> list[ChargingPileSummary]:
+        """Fetch EV charging piles for a plant."""
+        data = await self._call_authed(
+            ENDPOINT_GET_CHARGING_PILE_LIST,
+            {"psId": ps_id, "curPage": "1", "size": "20"},
+        )
+        result_data = data.get("result_data") or {}
+        rows = result_data.get("list") or result_data.get("pageList") or []
+        return [
+            ChargingPileSummary.from_dict(row)
+            for row in rows
+            if isinstance(row, dict) and (row.get("charging_pile_sn") or row.get("sn"))
+        ]
+
+    async def async_get_ps_battery_info(self, ps_id: str) -> dict[str, Any] | None:
+        """Fetch plant-level battery summary when available."""
+        data = await self._call_authed(ENDPOINT_GET_PS_BATTERY_INFO, {"ps_id": ps_id})
+        result_data = data.get("result_data")
+        if isinstance(result_data, dict):
+            return result_data
+        return None
+
     async def async_fetch_all_plants(self) -> dict[str, PlantData]:
         """Fetch plant summaries, flows, devices, and device points for all plants."""
         if self._auth is None:
@@ -243,7 +290,42 @@ class ISolarCloudClient:
                             dev.device_type,
                             err,
                         )
-            output[plant.ps_id] = PlantData(summary=plant, flow=flow, devices=devices)
+            active_faults: list[ActiveFault] = []
+            if flow.has_fault or any(d.has_fault for d in devices):
+                try:
+                    active_faults = await self.async_get_active_faults(plant.ps_id)
+                except ISolarCloudError as err:
+                    _LOGGER.debug("Could not fetch active faults for %s: %s", plant.ps_id, err)
+
+            weather: PlantWeather | None = None
+            try:
+                weather = await self.async_get_ps_weather_info(plant.ps_id)
+            except ISolarCloudError as err:
+                _LOGGER.debug("Could not fetch weather for %s: %s", plant.ps_id, err)
+
+            charging_piles: list[ChargingPileSummary] = []
+            if flow.has_charging_pile:
+                try:
+                    charging_piles = await self.async_get_charging_piles(plant.ps_id)
+                except ISolarCloudError as err:
+                    _LOGGER.debug("Could not fetch charging piles for %s: %s", plant.ps_id, err)
+
+            battery_info: dict[str, Any] | None = None
+            if flow.battery_soc is not None:
+                try:
+                    battery_info = await self.async_get_ps_battery_info(plant.ps_id)
+                except ISolarCloudError as err:
+                    _LOGGER.debug("Could not fetch battery info for %s: %s", plant.ps_id, err)
+
+            output[plant.ps_id] = PlantData(
+                summary=plant,
+                flow=flow,
+                devices=devices,
+                active_faults=active_faults,
+                weather=weather,
+                charging_piles=charging_piles,
+                battery_info=battery_info,
+            )
         return output
 
     async def _call_authed(self, endpoint: str, data: dict[str, Any]) -> dict[str, Any]:

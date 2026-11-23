@@ -115,6 +115,31 @@ async def test_login_and_fetch_all_plants() -> None:
                     ],
                 },
             ),
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "1",
+                    "result_msg": "success",
+                    "result_data": {
+                        "weather_map": {
+                            "current_temperature_c": 17,
+                            "sunrise": "07:42",
+                            "weather_code": "0",
+                        },
+                        "weather_info_list": [
+                            {"high_temperature": 19, "low_temperature": 5},
+                        ],
+                    },
+                },
+            ),
+            _FakeResponse(
+                200,
+                {
+                    "result_code": "1",
+                    "result_msg": "success",
+                    "result_data": {"data_info": {"data_detail_list": []}},
+                },
+            ),
         ]
     )
 
