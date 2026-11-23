@@ -99,12 +99,24 @@ class ISolarCloudDeviceEntity(CoordinatorEntity[ISolarCloudCoordinator]):
             "sw_version": (dev.firmware_version if dev else None),
         }
         if "via_device_id" in DeviceInfo.__annotations__:
-            if self.hass is not None:
-                plant_dev = dr.async_get(self.hass).async_get_device(
-                    identifiers={(DOMAIN, f"plant_{self._ps_id}")}
-                )
+            plant_device_id = self.coordinator.plant_device_ids.get(self._ps_id)
+            if plant_device_id is None and self.hass is not None:
+                dev_reg = dr.async_get(self.hass)
+                if hasattr(dev_reg, "async_get_device_by_identifier") and (
+                    self.coordinator.config_entry is not None
+                ):
+                    plant_dev = dev_reg.async_get_device_by_identifier(
+                        (DOMAIN, f"plant_{self._ps_id}"),
+                        self.coordinator.config_entry.entry_id,
+                    )
+                else:
+                    plant_dev = dev_reg.async_get_device(
+                        identifiers={(DOMAIN, f"plant_{self._ps_id}")}
+                    )
                 if plant_dev is not None:
-                    kwargs["via_device_id"] = plant_dev.id
+                    plant_device_id = plant_dev.id
+            if plant_device_id is not None:
+                kwargs["via_device_id"] = plant_device_id
         else:
             kwargs["via_device"] = (DOMAIN, f"plant_{self._ps_id}")
         return DeviceInfo(**kwargs)

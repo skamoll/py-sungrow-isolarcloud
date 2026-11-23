@@ -39,6 +39,7 @@ class ISolarCloudCoordinator(DataUpdateCoordinator[dict[str, PlantData]]):
         )
         self.client = client
         self.last_sync_utc: datetime | None = None
+        self.plant_device_ids: dict[str, str] = {}
 
     async def _async_update_data(self) -> dict[str, PlantData]:
         try:
