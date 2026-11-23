@@ -126,8 +126,12 @@ async def test_ha_setup_devices_entities_and_unload(tmp_path: Path) -> None:
 
         ent_reg = er.async_get(hass)
         entities = er.async_entries_for_config_entry(ent_reg, entry.entry_id)
-        assert len(entities) == 22
+        assert len(entities) == 26
         assert not any(e.entity_id.endswith("_2") for e in entities)
+
+        export_state = hass.states.get("sensor.pv_casa_grid_export_power")
+        assert export_state is not None
+        assert export_state.state == "1.35"
 
         status_state = hass.states.get("sensor.pv_casa_plant_status")
         assert status_state is not None

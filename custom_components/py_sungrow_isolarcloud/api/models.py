@@ -155,6 +155,7 @@ class PlantFlow:
     daily_load_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
     total_load_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
     month_pv_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
+    daily_self_consumption_energy: ValueUnit = field(default_factory=lambda: ValueUnit(None, "kWh"))
     today_income: ValueUnit = field(default_factory=lambda: ValueUnit(None, "EUR"))
     total_income: ValueUnit = field(default_factory=lambda: ValueUnit(None, "EUR"))
     co2_reduced_total: ValueUnit = field(default_factory=lambda: ValueUnit(None, "t"))
@@ -167,6 +168,34 @@ class PlantFlow:
     def has_fault(self) -> bool:
         """Return True when plant fault status indicates an active fault or alarm."""
         return self.ps_fault_status in ("1", "2")
+
+    @property
+    def grid_import_power_kw(self) -> float | None:
+        """Return positive grid import power in kW (0.0 when exporting)."""
+        if self.grid_power.value is None:
+            return None
+        return round(max(self.grid_power.value, 0.0), 4)
+
+    @property
+    def grid_export_power_kw(self) -> float | None:
+        """Return positive grid export power in kW (0.0 when importing)."""
+        if self.grid_power.value is None:
+            return None
+        return round(max(-self.grid_power.value, 0.0), 4)
+
+    @property
+    def battery_charge_power_kw(self) -> float | None:
+        """Return positive battery charging power in kW (0.0 when discharging)."""
+        if self.battery_power.value is None:
+            return None
+        return round(max(self.battery_power.value, 0.0), 4)
+
+    @property
+    def battery_discharge_power_kw(self) -> float | None:
+        """Return positive battery discharging power in kW (0.0 when charging)."""
+        if self.battery_power.value is None:
+            return None
+        return round(max(-self.battery_power.value, 0.0), 4)
 
     @classmethod
     def from_detail_dict(cls, data: dict[str, Any]) -> PlantFlow:
@@ -249,6 +278,10 @@ class PlantFlow:
             ).in_kwh(),
             month_pv_energy=ValueUnit.from_raw(
                 data.get("month_energy_virgin") or data.get("month_energy"),
+                "kWh",
+            ).in_kwh(),
+            daily_self_consumption_energy=ValueUnit.from_raw(
+                data.get("zfzy_map_virgin") or data.get("zfzy_map"),
                 "kWh",
             ).in_kwh(),
             today_income=ValueUnit.from_raw(data.get("today_income"), "EUR"),

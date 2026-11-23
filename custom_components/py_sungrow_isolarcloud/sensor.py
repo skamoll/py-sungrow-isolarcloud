@@ -106,6 +106,42 @@ PLANT_SENSORS: tuple[PlantSensorDescription, ...] = (
         unit_fn=lambda p: _vu_unit(p.flow.battery_power, UnitOfPower.KILO_WATT),
     ),
     PlantSensorDescription(
+        key="grid_import_power",
+        translation_key="grid_import_power",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        suggested_display_precision=2,
+        value_fn=lambda p: p.flow.grid_import_power_kw,
+    ),
+    PlantSensorDescription(
+        key="grid_export_power",
+        translation_key="grid_export_power",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        suggested_display_precision=2,
+        value_fn=lambda p: p.flow.grid_export_power_kw,
+    ),
+    PlantSensorDescription(
+        key="battery_charge_power",
+        translation_key="battery_charge_power",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        suggested_display_precision=2,
+        value_fn=lambda p: p.flow.battery_charge_power_kw,
+    ),
+    PlantSensorDescription(
+        key="battery_discharge_power",
+        translation_key="battery_discharge_power",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        suggested_display_precision=2,
+        value_fn=lambda p: p.flow.battery_discharge_power_kw,
+    ),
+    PlantSensorDescription(
         key="battery_soc",
         translation_key="battery_soc",
         device_class=SensorDeviceClass.BATTERY,
@@ -241,6 +277,18 @@ PLANT_SENSORS: tuple[PlantSensorDescription, ...] = (
         unit_fn=lambda p: _vu_unit(p.flow.month_pv_energy, UnitOfEnergy.KILO_WATT_HOUR),
     ),
     PlantSensorDescription(
+        key="daily_self_consumption_energy",
+        translation_key="daily_self_consumption_energy",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=2,
+        value_fn=lambda p: _vu_value(p.flow.daily_self_consumption_energy),
+        unit_fn=lambda p: _vu_unit(
+            p.flow.daily_self_consumption_energy, UnitOfEnergy.KILO_WATT_HOUR
+        ),
+    ),
+    PlantSensorDescription(
         key="today_income",
         translation_key="today_income",
         device_class=SensorDeviceClass.MONETARY,
@@ -317,7 +365,7 @@ async def async_setup_entry(
         for desc in PLANT_SENSORS:
             if (
                 desc.key.startswith(
-                    ("total_", "month_", "today_income", "co2_", "plant_temperature")
+                    ("total_", "month_", "today_income", "co2_", "plant_temperature", "daily_self_")
                 )
                 and desc.value_fn(plant) is None
             ):

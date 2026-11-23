@@ -1,0 +1,50 @@
+# Preconfigured Power Flow Card Plus example for Sungrow iSolarCloud
+# Replace `pv_my_plant` with your actual plant prefix (e.g. `pv_bestard_andres`).
+# Requires: https://github.com/flixlix/power-flow-card-plus (available in HACS)
+
+type: custom:power-flow-card-plus
+title: Solar Energy Flow
+entities:
+  grid:
+    entity:
+      consumption: sensor.pv_my_plant_grid_import_power
+      production: sensor.pv_my_plant_grid_export_power
+    secondary_info:
+      entity: sensor.pv_my_plant_daily_grid_import
+      unit_of_measurement: kWh
+      decimals: 1
+      unit_white_space: true
+  solar:
+    entity: sensor.pv_my_plant_pv_power
+    display_zero_state: true
+    secondary_info:
+      entity: sensor.pv_my_plant_daily_pv_energy
+      unit_of_measurement: kWh
+      decimals: 1
+      unit_white_space: true
+  battery:
+    entity:
+      consumption: sensor.pv_my_plant_battery_discharge_power
+      production: sensor.pv_my_plant_battery_charge_power
+    state_of_charge: sensor.pv_my_plant_battery_soc
+    state_of_charge_unit: "%"
+    show_state_of_charge: true
+  home:
+    entity: sensor.pv_my_plant_load_power
+    secondary_info:
+      entity: sensor.pv_my_plant_daily_load_energy
+      unit_of_measurement: kWh
+      decimals: 1
+      unit_white_space: true
+clickable_entities: true
+display_zero_lines:
+  mode: show
+  transparency: 50
+use_new_flow_rate_model: true
+w_decimals: 0
+kw_decimals: 2
+min_flow_rate: 0.75
+max_flow_rate: 6
+max_expected_power: 6000
+min_expected_power: 10
+watt_threshold: 1000
