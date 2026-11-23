@@ -135,3 +135,24 @@ def test_device_point_parsing() -> None:
     assert enum_pt.is_numeric is False
     assert enum_pt.is_enum is True
     assert enum_pt.value == "Grid-connected operation"
+
+
+def test_directional_power_signs() -> None:
+    """Grid (+ import / - export) and battery (- charge / + discharge) signs map accurately."""
+    charging_exporting = PlantFlow(
+        grid_power=ValueUnit(-1.35, "kW"),
+        battery_power=ValueUnit(-2.8, "kW"),
+    )
+    assert charging_exporting.grid_import_power_kw == 0.0
+    assert charging_exporting.grid_export_power_kw == 1.35
+    assert charging_exporting.battery_charge_power_kw == 2.8
+    assert charging_exporting.battery_discharge_power_kw == 0.0
+
+    discharging_importing = PlantFlow(
+        grid_power=ValueUnit(0.455, "kW"),
+        battery_power=ValueUnit(1.2, "kW"),
+    )
+    assert discharging_importing.grid_import_power_kw == 0.455
+    assert discharging_importing.grid_export_power_kw == 0.0
+    assert discharging_importing.battery_charge_power_kw == 0.0
+    assert discharging_importing.battery_discharge_power_kw == 1.2
