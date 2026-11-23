@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from custom_components.py_sungrow_isolarcloud.api.models import (
+from py_sungrow_isolarcloud.models import (
     DevicePoint,
     DeviceSummary,
     PlantFlow,

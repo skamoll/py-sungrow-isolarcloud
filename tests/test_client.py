@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from custom_components.py_sungrow_isolarcloud.api import (
+from py_sungrow_isolarcloud import (
     ISolarCloudAuthError,
     ISolarCloudClient,
 )

@@ -5,24 +5,35 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "py-sungrow-isolarcloud"
 version = "0.1.0"
-description = "Native Home Assistant integration for Sungrow iSolarCloud"
+description = "Async Python client library for the Sungrow iSolarCloud API"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.9.0",
     "cryptography>=42.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/skamoll/py-sungrow-isolarcloud"
+Repository = "https://github.com/skamoll/py-sungrow-isolarcloud"
+Issues = "https://github.com/skamoll/py-sungrow-isolarcloud/issues"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.6.0",
-    "homeassistant>=2024.6.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+py_sungrow_isolarcloud = ["py.typed"]
+
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]

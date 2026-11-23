@@ -20,28 +20,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+      - name: Install package and dev dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install aiohttp cryptography pytest pytest-asyncio ruff
+          pip install -e ".[dev]"
       - name: Lint and format check
         run: |
           ruff check .
           ruff format --check .
       - name: Run unit tests
         run: pytest -v
-
-  hassfest:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: home-assistant/actions/hassfest@master
-
-  hacs:
-    if: ${{ !github.event.repository.private }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hacs/action@main
-        with:
-          category: integration

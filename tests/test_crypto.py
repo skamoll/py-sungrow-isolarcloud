@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta, timezone
 
-from custom_components.py_sungrow_isolarcloud.api.crypto import (
+from py_sungrow_isolarcloud.crypto import (
     aes_decrypt_hex,
     aes_encrypt_hex,
     current_gmt_header,
